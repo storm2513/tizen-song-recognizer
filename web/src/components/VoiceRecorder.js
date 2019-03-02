@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import './VoiceRecorder.sass';
 import RecordRTC from 'recordrtc';
 import { StereoAudioRecorder } from 'recordrtc'
+import identify from '../services/identify_song'
 
 class VoiceRecorder extends Component {
   state = {
@@ -30,7 +31,11 @@ class VoiceRecorder extends Component {
   };
 
   setDisableRecordingTimeout = () => {
-    clearInterval(this.state.timeout)
+    clearTimeout(this.state.timeout)
+
+    if (this.state.recording) {
+      return
+    }
 
     let timeout = setTimeout(this.disableRecording, 5000)
     this.setState({
@@ -44,10 +49,11 @@ class VoiceRecorder extends Component {
   }
 
   disableRecording = () => {
-    clearInterval(this.state.timeout)
-
+    clearTimeout(this.state.timeout)
     this.state.recorder.stopRecording(() => {
-      this.state.recorder.save("recording")
+      identify(this.state.recorder.blob, function(response) {
+        console.log(response)
+      })
     });
 
     this.setState({
@@ -62,14 +68,11 @@ class VoiceRecorder extends Component {
           type: 'audio',
           mimeType: 'audio/wav',
           recorderType: StereoAudioRecorder
-        })
+        }),
+        recording: true
       })
       this.state.recorder.startRecording();
     });
-
-    this.setState({
-      recording: true
-    })
   }
 }
 
