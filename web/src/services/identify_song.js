@@ -13,5 +13,7 @@ export default function identify(blob, callback) {
     body: formData
   }).then(function(response) {
     return response.json()
-  }).then(callback)
+  }).then(callback).catch(function(error) {
+    alert(error)
+  });
 }

@@ -70,7 +70,7 @@ class VoiceRecorder extends Component {
     clearTimeout(this.state.timeout)
     const self = this
     this.state.recorder.stopRecording(() => {
-      identify(this.state.recorder.blob, function(response) {
+      identify(self.state.recorder.blob, function(response) {
         console.log(response)
         self.props.setSongData(response)
         self.setState({processing: false})

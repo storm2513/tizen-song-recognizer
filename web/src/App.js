@@ -12,6 +12,23 @@ class App extends Component {
     this.setState({songData: songData})
   }
 
+  componentDidMount() {
+    if (window.tizen) {
+      window.tizen.power.request("SCREEN", "SCREEN_NORMAL");
+    }
+    window.addEventListener('tizenhwkey', (ev) => {
+      if ((ev.key || ev.keyName) === 'back') {
+        if (this.state.songData === null) {
+          try {
+            window.tizen.application.getCurrentApplication().exit();
+          } catch (err) {}
+        } else {
+          this.setState({songData: null})
+        }
+      }
+    })
+  }
+
   render() {
     const songData = this.state.songData
     return (
