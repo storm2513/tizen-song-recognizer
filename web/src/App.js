@@ -1,13 +1,27 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.sass';
 import VoiceRecorder from './components/VoiceRecorder'
+import SongRecognitionResult from './components/SongRecognitionResult'
 
 class App extends Component {
+  state = {
+    songData: null
+  }
+
+  setSongData = (songData) => {
+    this.setState({songData: songData})
+  }
+
   render() {
+    const songData = this.state.songData
     return (
-      <div className="App">
-        <VoiceRecorder />
+      <div className="app">
+        { songData &&
+          <SongRecognitionResult songData={songData} />
+        }
+        { !songData &&
+          <VoiceRecorder setSongData={this.setSongData} />
+        }
       </div>
     );
   }

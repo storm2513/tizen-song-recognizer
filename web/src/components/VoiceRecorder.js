@@ -7,6 +7,7 @@ import identify from '../services/identify_song'
 class VoiceRecorder extends Component {
   state = {
     recording: false,
+    processing: false,
     timeout: null,
     recorder: null
   }
@@ -14,12 +15,26 @@ class VoiceRecorder extends Component {
   render() {
     return (
       <div className="voice-recorder">
-        <div className={this.state.recording ? "microphone-wrapper active" : "microphone-wrapper"} onClick={this.toggleRecording}>
+        <div className={this.microphoneWrapperClassName()} onClick={this.toggleRecording}>
           <div className="circle"></div>
           <div className="microphone"></div>
+          <div className="spinner-wrapper">
+            <div className="spinner">
+              <div className="dot1"></div>
+              <div className="dot2"></div>
+            </div>
+          </div>
         </div>
       </div>
     );
+  }
+
+  microphoneWrapperClassName = () => {
+    if (!this.state.processing) {
+      return this.state.recording ? "microphone-wrapper active" : "microphone-wrapper"
+    } else {
+      return "microphone-wrapper processing"
+    }
   }
 
   captureUserMedia = (callback) => {
@@ -44,26 +59,34 @@ class VoiceRecorder extends Component {
   }
 
   toggleRecording = () => {
+    if (this.state.processing) {
+      return
+    }
     this.setDisableRecordingTimeout()
     this.state.recording ? this.disableRecording() : this.enableRecording()
   }
 
   disableRecording = () => {
     clearTimeout(this.state.timeout)
+    const self = this
     this.state.recorder.stopRecording(() => {
       identify(this.state.recorder.blob, function(response) {
         console.log(response)
+        self.props.setSongData(response)
+        self.setState({processing: false})
       })
     });
 
     this.setState({
-      recording: false
+      recording: false,
+      processing: true
     })
   }
 
   enableRecording = () => {
+    const self = this
     this.captureUserMedia((stream) => {
-      this.setState({
+      self.setState({
         recorder: RecordRTC(stream, {
           type: 'audio',
           mimeType: 'audio/wav',
@@ -71,7 +94,7 @@ class VoiceRecorder extends Component {
         }),
         recording: true
       })
-      this.state.recorder.startRecording();
+      self.state.recorder.startRecording();
     });
   }
 }
