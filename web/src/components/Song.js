@@ -5,21 +5,28 @@ export default class Song extends Component {
   render() {
     const songData = this.props.songData
     const musicData = songData.metadata.music[0]
-    const genre = musicData.genres && musicData.genres[0].name
-    const artist = musicData.artists[0].name
+    const genres = musicData.genres && musicData.genres.map(genre => genre.name).join(", ")
+    const artists = musicData.artists.map(artist => artist.name).join(", ")
     const title = musicData.title
+    const album = musicData.album.name
+
     return (
       <div className="result">
-        { genre &&
+        { genres &&
           <div className="genre">
-            {genre}
+            {genres}
           </div>
         }
-        <div className="title">
-          {title}
+        <div className="wrapper">
+          <div className="title">
+            {title}
+          </div>
+          <div className="album">
+            {album}
+          </div>
         </div>
         <div className="artist">
-          {artist}
+          {artists}
         </div>
       </div>
     )

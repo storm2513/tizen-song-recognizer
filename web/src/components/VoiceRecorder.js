@@ -2,16 +2,12 @@ import React, { Component } from 'react';
 import './VoiceRecorder.sass';
 import RecordRTC from 'recordrtc';
 import { StereoAudioRecorder } from 'recordrtc'
-import identify from '../services/identify_song'
+import { connect } from "react-redux";
+import { microphoneActions, songDataActions, historyActions } from '../actions'
+import { captureUserMedia, getLastSongId } from '../services/common'
+import { identify, isSongRecognized } from '../services/identify_song'
 
 class VoiceRecorder extends Component {
-  state = {
-    recording: false,
-    processing: false,
-    timeout: null,
-    recorder: null
-  }
-
   render() {
     return (
       <div className="voice-recorder">
@@ -29,74 +25,85 @@ class VoiceRecorder extends Component {
     );
   }
 
+  componentDidMount() {
+    if (this.props.shouldRecordOnMount){
+      this.toggleRecording()
+      this.props.disableRecordingOnMount()
+    }
+  }
+
   microphoneWrapperClassName = () => {
-    if (!this.state.processing) {
-      return this.state.recording ? "microphone-wrapper active" : "microphone-wrapper"
+    if (!this.props.processing) {
+      return this.props.recording ? "microphone-wrapper active" : "microphone-wrapper"
     } else {
       return "microphone-wrapper processing"
     }
   }
 
-  captureUserMedia = (callback) => {
-    var params = { audio: true, video: false };
-
-    navigator.getUserMedia(params, callback, (error) => {
-      alert(JSON.stringify(error));
-    });
-  };
-
   setDisableRecordingTimeout = () => {
-    clearTimeout(this.state.timeout)
+    clearTimeout(this.props.timeout)
 
-    if (this.state.recording) {
-      return
-    }
+    if (this.props.recording) { return }
 
-    let timeout = setTimeout(this.disableRecording, 5000)
-    this.setState({
-      timeout: timeout
-    })
+    let timeout = setTimeout(this.disableRecording, 6000)
+    this.props.setDisableTimeout(timeout)
   }
 
   toggleRecording = () => {
-    if (this.state.processing) {
-      return
-    }
+    if (this.props.processing) { return }
     this.setDisableRecordingTimeout()
-    this.state.recording ? this.disableRecording() : this.enableRecording()
+    this.props.recording ? this.disableRecording() : this.enableRecording()
   }
 
   disableRecording = () => {
-    clearTimeout(this.state.timeout)
+    clearTimeout(this.props.timeout)
     const self = this
-    this.state.recorder.stopRecording(() => {
-      identify(self.state.recorder.blob, function(response) {
-        console.log(response)
+    this.props.recorder.stopRecording(() => {
+      identify(self.props.recorder.blob, function(response) {
+        response.id = getLastSongId(self.props.history) + 1
         self.props.setSongData(response)
-        self.setState({processing: false})
+        if (isSongRecognized(response.status.code)) {
+          self.props.saveToHistory(response)
+        }
+        self.props.stopProcessing()
       })
     });
 
-    this.setState({
-      recording: false,
-      processing: true
-    })
+    this.props.startProcessing()
+    this.props.stopRecording()
   }
 
   enableRecording = () => {
     const self = this
-    this.captureUserMedia((stream) => {
-      self.setState({
-        recorder: RecordRTC(stream, {
-          type: 'audio',
-          mimeType: 'audio/wav',
-          recorderType: StereoAudioRecorder
-        }),
-        recording: true
-      })
-      self.state.recorder.startRecording();
+    captureUserMedia((stream) => {
+      self.props.setRecorder(RecordRTC(stream, {
+        type: 'audio',
+        mimeType: 'audio/wav',
+        recorderType: StereoAudioRecorder
+      }))
+      self.props.startRecording()
+      self.props.recorder.startRecording();
     });
   }
 }
 
-export default VoiceRecorder;
+const mapStateToProps = function(state) {
+  return { ...state.microphone, history: state.history }
+}
+
+const mapDispatchToProps = dispatch => ({
+  startRecording: () => dispatch(microphoneActions.startRecording()),
+  startProcessing: () => dispatch(microphoneActions.startProcessing()),
+  stopRecording: () => dispatch(microphoneActions.stopRecording()),
+  stopProcessing: () => dispatch(microphoneActions.stopProcessing()),
+  setDisableTimeout: (timeout) => dispatch(microphoneActions.setDisableTimeout(timeout)),
+  setRecorder: (recorder) => dispatch(microphoneActions.setRecorder(recorder)),
+  setSongData: (data) => dispatch(songDataActions.setSongData(data)),
+  disableRecordingOnMount: () => dispatch(microphoneActions.setRecordingOnMount(false)),
+  saveToHistory: (song) => dispatch(historyActions.addSong(song))
+})
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(VoiceRecorder);

@@ -2,46 +2,66 @@ import React, { Component } from 'react';
 import './App.sass';
 import VoiceRecorder from './components/VoiceRecorder'
 import SongRecognitionResult from './components/SongRecognitionResult'
+import History from './components/History'
+import { connect } from "react-redux";
+import { songDataActions } from "./actions"
+import { addSwipeListeners } from "./services/swipe"
 
 class App extends Component {
-  state = {
-    songData: null
-  }
-
-  setSongData = (songData) => {
-    this.setState({songData: songData})
-  }
-
   componentDidMount() {
+    let onLeftSwipe = () => {
+      document.querySelector(".app .recognition").style.marginLeft = '-200%'
+    }
+    let onRightSwipe = () => {
+      document.querySelector(".app .recognition").style.marginLeft = '0'
+    }
+    addSwipeListeners(onLeftSwipe, onRightSwipe)
+
     if (window.tizen) {
       window.tizen.power.request("SCREEN", "SCREEN_NORMAL");
     }
     window.addEventListener('tizenhwkey', (ev) => {
       if ((ev.key || ev.keyName) === 'back') {
-        if (this.state.songData === null) {
+        if (this.props.songData && !this.props.songData.status) {
           try {
             window.tizen.application.getCurrentApplication().exit();
           } catch (err) {}
         } else {
-          this.setState({songData: null})
+          this.props.removeSongData()
         }
+      }
+    })
+    window.addEventListener("rotarydetent", (event) => {
+      let direction = event.detail.direction
+      if (direction === "CW"){
+        onLeftSwipe()
+      } else if (direction === "CCW"){
+        onRightSwipe()
       }
     })
   }
 
   render() {
-    const songData = this.state.songData
+    const songData = this.props.songData
     return (
       <div className="app">
-        { songData &&
-          <SongRecognitionResult songData={songData} />
-        }
-        { !songData &&
-          <VoiceRecorder setSongData={this.setSongData} />
-        }
+        <div className="recognition">
+          { songData && songData.status &&
+            <SongRecognitionResult songData={songData} />
+          }
+          { songData && !songData.status &&
+            <VoiceRecorder />
+          }
+        </div>
+        <History />
       </div>
     );
   }
 }
 
-export default App;
+const mapStateToProps = state => state
+const mapDispatchToProps = dispatch => ({
+  removeSongData: () => dispatch(songDataActions.removeSongData()),
+})
+
+export default connect(mapStateToProps, mapDispatchToProps)(App);

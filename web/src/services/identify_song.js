@@ -1,4 +1,4 @@
-export default function identify(blob, callback) {
+export function identify(blob, callback) {
   let params = {
     blob: blob
   }
@@ -16,4 +16,8 @@ export default function identify(blob, callback) {
   }).then(callback).catch(function(error) {
     alert(error)
   });
+}
+
+export function isSongRecognized(code) {
+  return code === 0
 }
