@@ -10,5 +10,5 @@ export function getLastSongId(songs) {
   if (songs.length === 0) {
     return 0
   }
-  return songs.map(song => song.id).sort().pop()
+  return songs.map(song => song.id).sort((a, b) => a - b).pop()
 }

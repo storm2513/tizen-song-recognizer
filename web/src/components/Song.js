@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import TryAgainButton from './TryAgainButton'
 import './Song.sass';
 
 export default class Song extends Component {
@@ -28,6 +29,7 @@ export default class Song extends Component {
         <div className="artist">
           {artists}
         </div>
+        <TryAgainButton className="small" />
       </div>
     )
   }
