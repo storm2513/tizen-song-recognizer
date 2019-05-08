@@ -20,22 +20,22 @@ class App extends Component {
     if (window.tizen) {
       window.tizen.power.request("SCREEN", "SCREEN_NORMAL");
     }
-    window.addEventListener('tizenhwkey', (ev) => {
-      if ((ev.key || ev.keyName) === 'back') {
+    window.addEventListener('tizenhwkey', event => {
+      if ((event.key || event.keyName) === 'back') {
         if (this.props.songData && !this.props.songData.status) {
           try {
             window.tizen.application.getCurrentApplication().exit();
-          } catch (err) {}
+          } catch (error) {}
         } else {
           this.props.removeSongData()
         }
       }
     })
-    window.addEventListener("rotarydetent", (event) => {
-      let direction = event.detail.direction
-      if (direction === "CW"){
+    window.addEventListener("rotarydetent", event => {
+      const direction = event.detail.direction
+      if (direction === "CW") {
         onLeftSwipe()
-      } else if (direction === "CCW"){
+      } else if (direction === "CCW") {
         onRightSwipe()
       }
     })

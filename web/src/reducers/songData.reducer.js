@@ -1,8 +1,6 @@
 import { songDataConstants } from '../constants';
 
-let initialState = {}
-
-export function songData(state = initialState, action) {
+export function songData(state = {}, action) {
   switch (action.type) {
     case songDataConstants.SET_SONG_DATA:
       return action.payload
