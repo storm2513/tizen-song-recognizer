@@ -7,6 +7,9 @@ import { microphoneActions, songDataActions, historyActions } from '../actions'
 import { captureUserMedia, getLastSongId } from '../services/common'
 import { identify, isSongRecognized } from '../services/identify_song'
 
+const MAX_RECORD_TIME = 7000
+const VIBRATION_TIME = 500
+
 class VoiceRecorder extends Component {
   render() {
     return (
@@ -45,7 +48,7 @@ class VoiceRecorder extends Component {
 
     if (this.props.recording) { return }
 
-    let timeout = setTimeout(this.disableRecording, 6000)
+    let timeout = setTimeout(this.disableRecording, MAX_RECORD_TIME)
     this.props.setDisableTimeout(timeout)
   }
 
@@ -66,6 +69,7 @@ class VoiceRecorder extends Component {
           self.props.saveToHistory(response)
         }
         self.props.stopProcessing()
+        window.navigator.vibrate(VIBRATION_TIME)
       })
     });
 
